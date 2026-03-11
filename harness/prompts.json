@@ -1,0 +1,152 @@
+{
+  "_comment": "Fixed prompt set for autobench evaluation. DO NOT MODIFY. These prompts cover diverse scenarios to stress-test sparse attention methods on Wan2.1-1.3B. Categories: motion, temporal coherence, fine detail, scene complexity.",
+  "prompts": [
+    {
+      "id": 0,
+      "category": "high_motion",
+      "prompt": "A professional dancer performing a fluid contemporary dance routine in a sunlit studio with wooden floors, full body visible, continuous flowing movement."
+    },
+    {
+      "id": 1,
+      "category": "high_motion",
+      "prompt": "Ocean waves crashing against rocky cliffs during a storm, dramatic spray of water, dark churning sea with whitecaps."
+    },
+    {
+      "id": 2,
+      "category": "high_motion",
+      "prompt": "A cheetah sprinting across the African savanna at full speed, dust kicking up behind it, golden grass blurring in the background."
+    },
+    {
+      "id": 3,
+      "category": "camera_motion",
+      "prompt": "Slow cinematic drone shot flying through a misty mountain valley at sunrise, revealing a hidden lake surrounded by pine trees."
+    },
+    {
+      "id": 4,
+      "category": "camera_motion",
+      "prompt": "Smooth tracking shot following a person walking through a busy Tokyo street at night, neon signs reflecting off wet pavement."
+    },
+    {
+      "id": 5,
+      "category": "low_motion",
+      "prompt": "A single candle flame flickering gently in a dark room, warm light casting soft shadows on old books stacked nearby."
+    },
+    {
+      "id": 6,
+      "category": "low_motion",
+      "prompt": "Portrait of an elderly man with deep wrinkles sitting on a park bench in autumn, leaves slowly drifting down around him."
+    },
+    {
+      "id": 7,
+      "category": "low_motion",
+      "prompt": "A still life painting-like scene of fresh fruit on a wooden table, soft window light, slight dust particles floating in the air."
+    },
+    {
+      "id": 8,
+      "category": "temporal_coherence",
+      "prompt": "A flower blooming in timelapse, petals slowly unfurling from bud to full bloom, smooth continuous motion over the entire duration."
+    },
+    {
+      "id": 9,
+      "category": "temporal_coherence",
+      "prompt": "A glass being slowly filled with water from a faucet, water level rising steadily, light refracting through the glass consistently."
+    },
+    {
+      "id": 10,
+      "category": "temporal_coherence",
+      "prompt": "A clock pendulum swinging back and forth with perfect regularity, wooden grandfather clock, consistent rhythmic motion."
+    },
+    {
+      "id": 11,
+      "category": "fine_detail_face",
+      "prompt": "Close-up of a young woman's face as she transitions from a neutral expression to a gentle smile, detailed skin texture and eyes."
+    },
+    {
+      "id": 12,
+      "category": "fine_detail_face",
+      "prompt": "A man with a thick beard speaking directly to camera, natural mouth movements and blinking, studio lighting."
+    },
+    {
+      "id": 13,
+      "category": "fine_detail_hands",
+      "prompt": "Close-up of hands playing a piano, fingers pressing keys with precision, visible finger joints and nail details."
+    },
+    {
+      "id": 14,
+      "category": "fine_detail_text",
+      "prompt": "A hand writing the word 'hello' on white paper with a black fountain pen, clear legible handwriting forming letter by letter."
+    },
+    {
+      "id": 15,
+      "category": "scene_complexity",
+      "prompt": "Aerial view of a crowded farmers market with many people walking between colorful stalls of produce and flowers."
+    },
+    {
+      "id": 16,
+      "category": "scene_complexity",
+      "prompt": "A busy intersection in a modern city, multiple cars, buses, and pedestrians all moving simultaneously, traffic lights changing."
+    },
+    {
+      "id": 17,
+      "category": "nature",
+      "prompt": "Underwater footage of a coral reef teeming with tropical fish, gentle current moving sea plants, sunlight filtering from above."
+    },
+    {
+      "id": 18,
+      "category": "nature",
+      "prompt": "A snow-covered forest with sunlight breaking through the trees, small snowflakes gently falling, peaceful winter atmosphere."
+    },
+    {
+      "id": 19,
+      "category": "abstract",
+      "prompt": "Colorful paint swirling in water, vivid blue and gold ink dispersing in slow motion, mesmerizing fluid dynamics."
+    },
+    {
+      "id": 20,
+      "category": "architecture",
+      "prompt": "Interior of a grand cathedral with stained glass windows, light beams streaming through, slow camera pan revealing vaulted ceilings."
+    },
+    {
+      "id": 21,
+      "category": "lighting_change",
+      "prompt": "A room transitioning from bright daylight to sunset golden hour, shadows lengthening across hardwood floors, warm color shift."
+    },
+    {
+      "id": 22,
+      "category": "multi_subject",
+      "prompt": "Two dogs playing fetch in a green park, one golden retriever and one border collie, running and jumping together."
+    },
+    {
+      "id": 23,
+      "category": "texture",
+      "prompt": "Close-up of rain droplets hitting a still pond surface, each drop creating perfect circular ripples that interact with each other."
+    },
+    {
+      "id": 24,
+      "category": "long_motion",
+      "prompt": "A paper airplane being thrown across a large room, following its complete arc from launch to landing, continuous flight path."
+    }
+  ],
+  "metadata": {
+    "total_prompts": 25,
+    "categories": {
+      "high_motion": [0, 1, 2],
+      "camera_motion": [3, 4],
+      "low_motion": [5, 6, 7],
+      "temporal_coherence": [8, 9, 10],
+      "fine_detail_face": [11, 12],
+      "fine_detail_hands": [13],
+      "fine_detail_text": [14],
+      "scene_complexity": [15, 16],
+      "nature": [17, 18],
+      "abstract": [19],
+      "architecture": [20],
+      "lighting_change": [21],
+      "multi_subject": [22],
+      "texture": [23],
+      "long_motion": [24]
+    },
+    "fast_eval_subset": [0, 3, 5, 8, 11, 15, 17, 19, 23],
+    "_fast_eval_note": "9 prompts covering each major category for fast screening"
+  }
+}

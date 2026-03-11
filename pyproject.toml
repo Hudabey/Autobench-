@@ -1,0 +1,34 @@
+[project]
+name = "autobench"
+version = "0.1.0"
+description = "Autonomous sparse attention benchmarking for Wan2.1-1.3B"
+requires-python = ">=3.10"
+dependencies = [
+    # Core
+    "torch>=2.4.0",
+    "torchvision",
+    "diffusers>=0.33.0",
+    "transformers",
+    "accelerate",
+    "safetensors",
+    # Metrics
+    "lpips",
+    "torchmetrics",
+    "clean-fid",
+    "image-reward",
+    # Utilities
+    "pyyaml",
+    "numpy",
+    "pillow",
+]
+
+[project.optional-dependencies]
+full = [
+    "hpsv2",               # HPSv2 metric (large model download)
+    "matplotlib",           # plotting
+    "pandas",               # analysis
+    "jupyter",              # analysis notebook
+]
+
+[tool.uv]
+dev-dependencies = []

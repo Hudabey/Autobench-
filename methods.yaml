@@ -1,0 +1,213 @@
+# Sparse Attention Methods Registry
+# 🔒 FIXED — agent references this but cannot modify
+#
+# Each entry describes a method, its repo, key tunable parameters,
+# and integration notes. The agent uses this to plan experiments.
+
+methods:
+
+  # ─── Video-native methods (highest priority) ───
+
+  nabla:
+    name: "NABLA"
+    full_name: "Neighborhood Adaptive Block-Level Attention"
+    repo: "https://github.com/gen-ai-team/Wan2.1-NABLA"
+    paper: null
+    type: "adaptive_block"
+    key_params:
+      - block_size         # [32, 64, 128, 256]
+      - adaptive_threshold # [0.1, 0.3, 0.5]
+      - neighborhood_size  # [1, 2, 4]
+    default_config:
+      block_size: 64
+      adaptive_threshold: 0.3
+    integration_notes: "Already targets Wan2.1. Likely cleanest integration."
+    priority: "HIGH"
+
+  sliding_tile:
+    name: "Sliding Tile Attention"
+    full_name: "Sliding Tile Attention for Video DiTs"
+    repo: "https://github.com/hao-ai-lab/FastVideo"
+    paper: null
+    type: "sliding_tile"
+    key_params:
+      - tile_size_t   # temporal tile [2, 4, 8]
+      - tile_size_h   # spatial height tile [2, 4, 8]
+      - tile_size_w   # spatial width tile [2, 4, 8]
+    default_config:
+      tile_size_t: 4
+      tile_size_h: 4
+      tile_size_w: 4
+    integration_notes: "Part of FastVideo. Well-tested on video DiTs."
+    priority: "HIGH"
+
+  vorta:
+    name: "VORTA"
+    full_name: "Dynamic Routing Across Specialized Sparse Kernels"
+    repo: "https://github.com/wenhao728/VORTA"
+    paper: null
+    type: "dynamic_routing"
+    key_params:
+      - num_routes     # [2, 4, 8]
+      - sparse_ratio   # [0.3, 0.5, 0.7]
+      - window_size    # [64, 128, 256]
+      - kernel_type    # ["local", "strided", "random"]
+    default_config:
+      num_routes: 4
+      sparse_ratio: 0.5
+      window_size: 128
+    integration_notes: "Dynamic routing may need adaptation for Wan2.1 attention layout."
+    priority: "HIGH"
+
+  vsa:
+    name: "VSA"
+    full_name: "Two-Stage Video Sparse Attention"
+    repo: "https://github.com/hao-ai-lab/FastVideo"
+    paper: null
+    type: "two_stage"
+    key_params:
+      - coarse_pool_size  # [4, 8, 16]
+      - fine_top_k        # [16, 32, 64, 128]
+    default_config:
+      coarse_pool_size: 8
+      fine_top_k: 64
+    integration_notes: "Part of FastVideo suite. Coarse pooling + fine-grained selection."
+    priority: "MEDIUM"
+
+  vmoba:
+    name: "VMOBA"
+    full_name: "Video Motion-Based Attention"
+    repo: "https://github.com/KlingAIResearch/VMoBA"
+    paper: null
+    type: "recurrent_partition"
+    key_params:
+      - partition_dims   # ["1D", "2D", "3D", "1D-2D-3D"]
+      - recurrence_steps # [1, 2, 4]
+    default_config:
+      partition_dims: "1D-2D-3D"
+      recurrence_steps: 1
+    integration_notes: "From Kling team. Recurrent partitioning across spatial-temporal dims."
+    priority: "MEDIUM"
+
+  # ─── Research targets ───
+
+  sla1:
+    name: "SLA1"
+    full_name: "Sparse-Linear Attention"
+    repo: "https://github.com/thu-ml/SLA"
+    paper: null
+    type: "sparse_linear"
+    key_params:
+      - top_k_ratio   # [0.1, 0.3, 0.5]
+      - block_size     # [32, 64, 128]
+      - linear_dim     # [64, 128, 256]
+    default_config:
+      top_k_ratio: 0.3
+      block_size: 64
+    integration_notes: |
+      ⚠️ CRITICAL: Prior Q/K/V probe analysis on Wan2.1-1.3B found 0% negligible
+      attention weights (SLA predicts ~45%). ~45.7% classified as CRITICAL.
+      SLA's sparsity assumptions may not hold for this model. Verify empirically.
+    priority: "HIGH — validate/invalidate sparsity claims"
+
+  monarch_rt:
+    name: "MonarchRT"
+    full_name: "MonarchRT Kernel-Level Sparse Attention"
+    repo: null
+    paper: "arxiv 2602.12271"
+    type: "monarch_matrix"
+    key_params:
+      - block_size     # [16, 32, 64]
+      - num_blocks     # [2, 4, 8]
+    default_config:
+      block_size: 32
+      num_blocks: 4
+    integration_notes: |
+      Primary research target. Claims kernel-level speedups via Monarch matrix
+      structure. No public repo yet — may need to implement from paper.
+      Benchmarking task assigned to collaborator (Azmine) on RTX 5090.
+    priority: "CRITICAL — independent verification of speedup claims"
+
+  # ─── Additional methods ───
+
+  sparse_vdit:
+    name: "Sparse-vDiT"
+    full_name: "Pattern-Optimized Sparse Kernels for Video DiT"
+    repo: "https://github.com/Peyton-Chen/Sparse-vDiT"
+    paper: null
+    type: "pattern_optimized"
+    key_params:
+      - pattern_type   # ["diagonal", "vertical_stripe", "block_diagonal"]
+      - stripe_width   # [4, 8, 16]
+    default_config:
+      pattern_type: "diagonal"
+      stripe_width: 8
+    integration_notes: "Pattern-optimized kernels. Check if patterns match Wan2.1 attention structure."
+    priority: "MEDIUM"
+
+  pisa:
+    name: "PISA"
+    full_name: "Piecewise Sparse Attention"
+    repo: "https://github.com/xie-lab-ml/piecewise-sparse-attention"
+    paper: null
+    type: "piecewise"
+    key_params:
+      - num_pieces       # [2, 4, 8]
+      - piece_sparsity   # [0.3, 0.5, 0.7]
+    default_config:
+      num_pieces: 4
+      piece_sparsity: 0.5
+    integration_notes: "Piecewise decomposition of attention. May work well with structured video attention."
+    priority: "MEDIUM"
+
+  video_sna:
+    name: "Video SNA"
+    full_name: "Video Neighborhood Sparse Attention"
+    repo: "https://github.com/Espere-1119-Song/VideoNSA"
+    paper: null
+    type: "neighborhood_sparse"
+    key_params:
+      - neighborhood_size    # [4, 8, 16]
+      - compression_ratio    # [0.25, 0.5]
+    default_config:
+      neighborhood_size: 8
+      compression_ratio: 0.5
+    priority: "LOW"
+
+  deepseek_sparse:
+    name: "DeepSeek Sparse Attention"
+    repo: "https://github.com/deepseek-ai/DeepSeek-V3.2-Exp"
+    paper: null
+    type: "sparse"
+    key_params:
+      - sparsity_ratio  # [0.3, 0.5, 0.7]
+      - block_size      # [64, 128]
+    default_config:
+      sparsity_ratio: 0.5
+      block_size: 64
+    integration_notes: "Designed for LLMs, not DiTs. May need significant adaptation."
+    priority: "LOW"
+
+  native_sparse:
+    name: "Native Sparse Attention (FlashMLA)"
+    repo: "https://github.com/deepseek-ai/FlashMLA"
+    paper: null
+    type: "sparse_mla"
+    key_params:
+      - num_heads_kv
+      - head_dim
+    integration_notes: "MLA architecture, fundamentally different from standard attention. Hard to adapt."
+    priority: "LOW"
+
+  salad:
+    name: "SALAD"
+    full_name: "Gated Parallel Linear + Sparse Branches"
+    repo: null
+    paper: null
+    type: "gated_hybrid"
+    key_params:
+      - gate_threshold
+      - linear_ratio
+      - sparse_ratio
+    integration_notes: "No public repo found. Skip unless released."
+    priority: "SKIP until repo available"

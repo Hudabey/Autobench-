@@ -1,0 +1,21 @@
+# AutoBench Experiment Configuration
+# ✏️ AGENT EDITS THIS FILE
+#
+# This is the dense baseline. The agent will replace this with
+# sparse attention method configs after Phase 1.
+
+experiment_name: "dense_baseline"
+method: "dense"
+method_repo: null
+
+params: {}
+
+inference:
+  num_inference_steps: 50
+  guidance_scale: 7.5
+  video_length: 81
+  resolution: [480, 832]
+  seed: 42
+
+hypothesis: "Establish dense attention baseline metrics. All future experiments are compared against this."
+phase: 1
