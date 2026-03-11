@@ -54,7 +54,7 @@ _cached_model_id = None
 
 
 def load_pipeline(
-    model_id: str = "Wan-AI/Wan2.1-T2V-1.3B",
+    model_id: str = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
     dtype: torch.dtype = torch.bfloat16,
     device: str = "cuda",
 ):
@@ -377,23 +377,39 @@ def generate_videos(
         # This ensures fast-mode videos match the correct references
         video_path = os.path.join(output_dir, f"video_p{prompt_id:03d}.pt")
 
-        if hasattr(output, "frames"):
-            frames = output.frames
-            if isinstance(frames, list) and len(frames) > 0:
-                if isinstance(frames[0], list):
-                    # frames is [[PIL, PIL, ...]] — batch dim
-                    frames = frames[0]
-                # Convert PIL to tensor if needed
-                if hasattr(frames[0], "convert"):
-                    import torchvision.transforms as T
-                    to_tensor = T.ToTensor()
-                    frames_tensor = torch.stack([to_tensor(f) for f in frames])
-                else:
-                    frames_tensor = torch.stack(frames) if isinstance(frames, list) else frames
+        # Extract frames from pipeline output.
+        # WanPipeline returns output.frames as numpy ndarray: (batch, T, H, W, C) float32 [0,1]
+        # We convert to torch tensor: (T, C, H, W) float32 [0,1] for metrics.
+        import numpy as np
+
+        raw = output.frames if hasattr(output, "frames") else output
+
+        if isinstance(raw, np.ndarray):
+            # numpy (batch, T, H, W, C) → (T, C, H, W) tensor
+            if raw.ndim == 5:
+                raw = raw[0]  # remove batch dim → (T, H, W, C)
+            # (T, H, W, C) → (T, C, H, W)
+            frames_tensor = torch.from_numpy(raw).permute(0, 3, 1, 2).float().clamp(0, 1)
+        elif isinstance(raw, torch.Tensor):
+            if raw.ndim == 5:
+                raw = raw[0]
+            # If (T, H, W, C), permute; if already (T, C, H, W), keep
+            if raw.shape[-1] in (1, 3) and raw.shape[1] != 3:
+                frames_tensor = raw.permute(0, 3, 1, 2).float().clamp(0, 1)
             else:
-                frames_tensor = frames
+                frames_tensor = raw.float().clamp(0, 1)
+        elif isinstance(raw, list):
+            # List of PIL images or list-of-lists
+            if isinstance(raw[0], list):
+                raw = raw[0]
+            if hasattr(raw[0], "convert"):
+                import torchvision.transforms as T
+                to_tensor = T.ToTensor()
+                frames_tensor = torch.stack([to_tensor(f) for f in raw])
+            else:
+                frames_tensor = torch.stack(raw) if isinstance(raw, list) else raw
         else:
-            frames_tensor = output
+            raise TypeError(f"Unexpected output.frames type: {type(raw)}")
 
         torch.save(frames_tensor.cpu(), video_path)
         video_paths.append(video_path)

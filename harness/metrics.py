@@ -76,8 +76,12 @@ def _get_lpips():
 def _get_image_reward():
     global _image_reward_model
     if _image_reward_model is None:
-        import ImageReward as IR
-        _image_reward_model = IR.load("ImageReward-v1.0")
+        try:
+            import ImageReward as IR
+            _image_reward_model = IR.load("ImageReward-v1.0")
+        except (ImportError, Exception) as e:
+            print(f"[metrics] WARNING: ImageReward unavailable ({e}), scores will be 0.0")
+            _image_reward_model = "unavailable"
     return _image_reward_model
 
 
@@ -163,6 +167,8 @@ def compute_image_reward_frames(
     """Compute mean ImageReward score for sampled frames.
     Samples every N frames to keep computation manageable."""
     model = _get_image_reward()
+    if model == "unavailable":
+        return 0.0
     from torchvision.transforms.functional import to_pil_image
 
     scores = []

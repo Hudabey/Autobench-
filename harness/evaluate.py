@@ -77,7 +77,7 @@ def load_prompts(mode: str = "full") -> list[dict]:
 # ──────────────────────────────────────────────────────────────
 
 def generate_dense_baseline(
-    model_id: str = "Wan-AI/Wan2.1-T2V-1.3B",
+    model_id: str = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
     mode: str = "full",
 ):
     """Generate reference videos with dense (vanilla) attention.
@@ -255,7 +255,7 @@ def get_experiment_count() -> int:
 
 def run_experiment(
     eval_mode: str = "full",      # "fast" or "full"
-    model_id: str = "Wan-AI/Wan2.1-T2V-1.3B",
+    model_id: str = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
 ) -> dict:
     """Run one complete experiment cycle.
 
@@ -520,7 +520,7 @@ if __name__ == "__main__":
                         help="Evaluation mode: 'fast' (9 prompts, FID+LPIPS) or 'full' (25 prompts, all metrics)")
     parser.add_argument("--baseline-only", action="store_true",
                         help="Only generate dense baseline, then exit")
-    parser.add_argument("--model", default="Wan-AI/Wan2.1-T2V-1.3B",
+    parser.add_argument("--model", default="Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
                         help="Model ID")
     args = parser.parse_args()
 
