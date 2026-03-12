@@ -1,14 +1,16 @@
 # AutoBench Experiment Configuration
-# ✏️ AGENT EDITS THIS FILE
-#
-# This is the dense baseline. The agent will replace this with
-# sparse attention method configs after Phase 1.
+# AGENT EDITS THIS FILE
 
-experiment_name: "dense_baseline"
-method: "dense"
-method_repo: null
+experiment_name: "hybrid_dense10_vmoba_full"
+method: "vmoba"
+method_repo: "https://github.com/vmoba-attention/vmoba"
 
-params: {}
+params:
+  tile_size_t: 3        # VMoBA chunk_size (temporal frames per chunk)
+  tile_size_h: 10       # dense_steps: first 10/50 steps use dense SDPA
+  tile_size_w: null
+  block_size: 3         # moba_topk
+  sparsity_ratio: 0.25  # simsum_threshold
 
 inference:
   num_inference_steps: 50
@@ -17,5 +19,5 @@ inference:
   resolution: [480, 832]
   seed: 42
 
-hypothesis: "Establish dense attention baseline metrics. All future experiments are compared against this."
-phase: 1
+hypothesis: "Full-mode evaluation of best hybrid config (dense_steps=10). Fast mode showed FID=157.63, LPIPS=0.4494, composite=0.2104, speedup=3.43x. Full mode adds SSIM, PSNR, ImageReward, HPSv2 on 25 prompts."
+phase: 5
