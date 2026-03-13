@@ -2,16 +2,16 @@
 
 ## Executive Summary
 
-We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, SLA) on the **Wan2.1-1.3B** video diffusion transformer across **30 experiments** spanning 4 research phases. This is the definitive report of all findings.
+We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, SLA) on the **Wan2.1-1.3B** video diffusion transformer across **32 experiments** spanning 4 research phases. This is the definitive report of all findings.
 
 **Key results:**
 
-- **Combined timestep + layer-selective SLA achieves composite=0.431 at 2.97x speedup** -- the best result across all 30 experiments (Experiment #30).
+- **Combined timestep + layer-selective SLA achieves composite=0.462 at 2.90x speedup** -- the best result across all 32 experiments (Experiment #32: dense_steps=30, boundary=8).
 - **SLA consistently outperforms VMoBA** across every configuration tested, with quality advantages ranging from +5% to +69% composite.
 - **Hybrid dense-to-sparse approach is universally beneficial**, delivering 2-4x quality improvement over pure sparse methods with only modest speedup reduction.
 - **Data-dependent sparsity** (VMoBA, SLA) fundamentally outperforms **fixed-window sparsity** (NABLA) -- especially when combined with hybrid strategies.
 - **PISA is incompatible** with RTX 5090 / Triton 3.4.0 hardware; requires Hopper architecture.
-- Increasing dense early steps from 10 to 20 yields significant quality gains (composite 0.373 to 0.431) with only ~3% speedup loss.
+- Increasing dense early steps from 10 to 30 yields significant quality gains (composite 0.373 to 0.462) with only ~5% speedup loss.
 
 ## Environment
 
@@ -59,7 +59,7 @@ We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, 
 - **Backend**: Custom Triton kernels for block-level QK scoring + standard attention on selected blocks
 - **Default config**: block_size=64, topk=0.3 (retain 30% of blocks)
 - **Status**: Working -- best overall results across all configurations
-- **Best result**: 2.97x speedup, composite=0.431 (combined d=20, b=8) -- OVERALL BEST
+- **Best result**: 2.90x speedup, composite=0.462 (combined d=30, b=8) -- OVERALL BEST
 - **Key insight**: Despite `methods.yaml` reporting 0% negligible attention weights (vs SLA's own prediction of 45%), SLA works well empirically because its top-k block selection captures the most important attention patterns regardless of whether weights are truly "negligible."
 
 ### 5. Other Methods Investigated (Not Feasible)
@@ -83,7 +83,7 @@ We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, 
 
 ## Complete Results Table
 
-All 30 experiments with fast-mode evaluation (9 prompts, FID + LPIPS metrics).
+All 32 experiments with fast-mode evaluation (9 prompts, FID + LPIPS metrics).
 
 | # | Experiment | Phase | Speedup | FID | LPIPS | Composite | Pareto |
 |---|-----------|-------|---------|-----|-------|-----------|--------|
@@ -116,7 +116,9 @@ All 30 experiments with fast-mode evaluation (9 prompts, FID + LPIPS metrics).
 | 27 | Combined SLA (s=10, b=3) | 4 | 3.31x | 89.1 | 0.253 | 0.347 | YES |
 | 28 | Combined SLA (topk=0.15, b=5) | 4 | 3.43x | 127.4 | 0.342 | 0.277 | no |
 | 29 | Combined SLA (d=20, b=5) | 4 | 3.08x | 56.3 | 0.154 | 0.415 | YES |
-| 30 | **Combined SLA (d=20, b=8)** | 4 | **2.97x** | **47.8** | **0.131** | **0.431** | **YES (BEST)** |
+| 30 | Combined SLA (d=20, b=8) | 4 | 2.97x | 47.8 | 0.131 | 0.431 | YES |
+| 31 | Combined SLA (d=30, b=5) | 4 | 2.96x | 42.0 | 0.101 | 0.447 | YES |
+| 32 | **Combined SLA (d=30, b=8)** | 4 | **2.90x** | **33.0** | **0.086** | **0.462** | **YES (BEST)** |
 
 **Failed experiments summary**: #2-3 (disk space), #5-6 (silent dense fallback -- methods appeared to work but actually used dense attention), #8 (PISA Triton crash on RTX 5090), #10 (disk space), #16 (disk full during metrics computation).
 
@@ -129,8 +131,10 @@ Composite Quality
     |
     |
     |
-0.43|                         * Combined SLA(d=20,b=8) (2.97x)  << BEST
-0.42|                          * Combined SLA(d=20,b=5) (3.08x)
+0.46|                        * Combined SLA(d=30,b=8) (2.90x)  << BEST
+0.45|                         * Combined SLA(d=30,b=5) (2.96x)
+0.43|                          * Combined SLA(d=20,b=8) (2.97x)
+0.42|                           * Combined SLA(d=20,b=5) (3.08x)
     |
 0.37|                           * Combined SLA(s=10,b=8) (3.06x)
 0.36|                            * Combined SLA(s=10,b=5) (3.20x)
@@ -313,6 +317,7 @@ topk=0.15 is too aggressive -- the 7% speedup gain costs 24% composite quality.
 |-------------|---------|-----|-----------|---------|
 | 10 | 3.20x | 76.7 | 0.364 | -- |
 | 20 | 3.08x | 56.3 | 0.415 | +14% quality, -4% speed |
+| 30 | 2.96x | 42.0 | 0.447 | +23% quality, -8% speed |
 
 ### Dense Steps Effect (SLA, boundary=8)
 
@@ -320,6 +325,7 @@ topk=0.15 is too aggressive -- the 7% speedup gain costs 24% composite quality.
 |-------------|---------|-----|-----------|---------|
 | 10 | 3.06x | 74.7 | 0.373 | -- |
 | 20 | 2.97x | 47.8 | 0.431 | +16% quality, -3% speed |
+| 30 | 2.90x | 33.0 | 0.462 | +24% quality, -5% speed |
 
 ## Technical Implementation Details
 
@@ -391,24 +397,24 @@ All attention patches are saved in `experiments/patches/`:
 
 5. **No VMoBA d=20 combined**: We tested VMoBA with dense_steps=20 only in hybrid mode (no boundary layers), not in full combined mode. Based on trends, Combined VMoBA(d=20, b=8) would likely achieve ~0.40 composite.
 
-6. **Disk space failures**: 5 of 30 experiments failed due to disk space constraints, preventing some parameter exploration.
+6. **Disk space failures**: 5 of 32 experiments failed due to disk space constraints, preventing some parameter exploration.
 
 ## Recommended Configuration
 
 ### Best Quality (RECOMMENDED)
 
-Combined SLA with 20 dense steps and 8 boundary layers:
+Combined SLA with 30 dense steps and 8 boundary layers:
 
 ```yaml
 method: "sla1"
 params:
-  tile_size_h: 20       # dense_steps: first 20/50 steps use dense attention
+  tile_size_h: 30       # dense_steps: first 30/50 steps use dense attention
   tile_size_w: 8        # dense_layer_boundary: layers 0-7 and 22-29 use dense
   block_size: 64        # BLKQ/BLKK for SLA block scoring
   sparsity_ratio: 0.3   # topk_ratio: retain 30% of blocks
 ```
 
-**Result: 2.97x speedup, FID=47.8, LPIPS=0.131, composite=0.431**
+**Result: 2.90x speedup, FID=33.0, LPIPS=0.086, composite=0.462**
 
 ### Best Speed-Quality Balance
 
