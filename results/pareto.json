@@ -1,0 +1,630 @@
+[
+  {
+    "experiment_id": "exp_0001",
+    "experiment_name": "dense_baseline",
+    "timestamp": "2026-03-12T15:14:21.367483+00:00",
+    "method": "dense",
+    "config": {
+      "params": {
+        "apply_to_layers": "all"
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Establish dense attention baseline metrics. All future experiments are compared against this.",
+    "phase": 1,
+    "latency": {
+      "total_generation_s": 4590.973350114189,
+      "avg_per_video_s": 183.63893400456757,
+      "ms_per_frame": 2267.147333389723,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 1.0
+    },
+    "quality": {
+      "fid": 0.0,
+      "ssim": 1.0,
+      "psnr": 50.0,
+      "lpips": 0.0,
+      "image_reward": 0.0,
+      "hpsv2": 0.25996744791666665,
+      "composite_score": 1.0
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.0
+    },
+    "meta": {
+      "eval_mode": "full",
+      "num_videos": 25,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 0.0
+    },
+    "status": "success",
+    "pareto_optimal": true
+  },
+  {
+    "experiment_id": "exp_0005",
+    "experiment_name": "pisa_default",
+    "timestamp": "2026-03-12T16:33:35.546478+00:00",
+    "method": "pisa",
+    "config": {
+      "params": {
+        "block_size": 64,
+        "sparsity_ratio": 0.15,
+        "apply_to_layers": "all",
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "PISA piecewise sparse attention selects top-k blocks per query block based on block-level scores, achieving sparse attention without any training. At density=0.15, should provide significant speedup with better quality than fixed-window approaches since it's data-dependent.",
+    "phase": 2,
+    "latency": {
+      "total_generation_s": 1670.2585833631456,
+      "avg_per_video_s": 185.58428704034952,
+      "ms_per_frame": 2291.164037535179,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 2.7486602349140723
+    },
+    "quality": {
+      "fid": -0.00010236783219852441,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.0,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.5249999997875
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.0
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.240673792
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0024",
+    "experiment_name": "hybrid_dense10_sla",
+    "timestamp": "2026-03-13T03:50:34.535439+00:00",
+    "method": "sla1",
+    "config": {
+      "params": {
+        "block_size": 64,
+        "sparsity_ratio": 0.3,
+        "apply_to_layers": "all",
+        "tile_size_h": 10,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Hybrid dense\u2192SLA: dense for first 10 steps, SLA sparse for remaining 40. Pure SLA got 3.76x/composite=0.167. Hybrid VMoBA(10) improved composite from 0.099\u21920.210. Expect similar improvement for SLA, potentially reaching composite ~0.25-0.30 at ~3.5x speedup.",
+    "phase": 4,
+    "latency": {
+      "total_generation_s": 1312.7770536709577,
+      "avg_per_video_s": 145.86411707455085,
+      "ms_per_frame": 1800.7915688216156,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 3.4971462498345116
+    },
+    "quality": {
+      "fid": 109.61184190281381,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.27182688361700674,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.31899566864125
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.15170899017533127
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.24073984
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0027",
+    "experiment_name": "combined_ts_layer3_sla",
+    "timestamp": "2026-03-13T05:43:50.056848+00:00",
+    "method": "sla1",
+    "config": {
+      "params": {
+        "block_size": 64,
+        "sparsity_ratio": 0.3,
+        "apply_to_layers": "all",
+        "tile_size_h": 10,
+        "tile_size_w": 3,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Combined SLA with narrow boundary (3 layers). Mapping the boundary curve for SLA. VMoBA boundary=3 got 3.28x/0.264. SLA has been consistently better, so expect ~3.3x and composite ~0.30-0.33.",
+    "phase": 4,
+    "latency": {
+      "total_generation_s": 1388.9782733134925,
+      "avg_per_video_s": 154.33091925705472,
+      "ms_per_frame": 1905.3199908278361,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 3.305288094364602
+    },
+    "quality": {
+      "fid": 89.07920430149619,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.2530411025726419,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.347485672531169
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.13987654052583642
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.242258944
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0029",
+    "experiment_name": "combined_sla_dense20_b5",
+    "timestamp": "2026-03-13T06:58:25.862846+00:00",
+    "method": "sla1",
+    "config": {
+      "params": {
+        "block_size": 64,
+        "sparsity_ratio": 0.3,
+        "apply_to_layers": "all",
+        "tile_size_h": 20,
+        "tile_size_w": 5,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Combined SLA with 20 dense steps (vs 10). For VMoBA, dense_steps 10\u219220 improved composite from 0.210\u21920.258. Combined SLA(10,b=5) got 0.364 at 3.20x. With 20 dense steps expect quality boost to ~0.40+ at ~2.9-3.0x. This could push the quality ceiling even higher.",
+    "phase": 4,
+    "latency": {
+      "total_generation_s": 1491.0361817656085,
+      "avg_per_video_s": 165.6706868628454,
+      "ms_per_frame": 2045.3171217635233,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 3.079048923331823
+    },
+    "quality": {
+      "fid": 56.284996871670046,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.15376776238885517,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.4147594928856472
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.11396959515764503
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.241994752
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0031",
+    "experiment_name": "combined_sla_dense30_b5",
+    "timestamp": "2026-03-13T08:19:07.877149+00:00",
+    "method": "sla1",
+    "config": {
+      "params": {
+        "block_size": 64,
+        "sparsity_ratio": 0.3,
+        "apply_to_layers": "all",
+        "tile_size_h": 30,
+        "tile_size_w": 5,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Combined SLA with 30 dense steps. Dense=20/b=5 got 0.415 at 3.08x. Dense=10/b=5 got 0.364 at 3.20x. Dense=30 means only 20/50 steps sparse on middle layers \u2014 should give very high quality at ~2.5-2.7x speedup. Mapping the dense_steps\u2192quality curve further.",
+    "phase": 4,
+    "latency": {
+      "total_generation_s": 1549.9503381866962,
+      "avg_per_video_s": 172.21670424296624,
+      "ms_per_frame": 2126.1321511477313,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 2.962013192942181
+    },
+    "quality": {
+      "fid": 41.99153595939731,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.10104174093459573,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.4470533349658278
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.09162471961764485
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.241994752
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0032",
+    "experiment_name": "combined_sla_dense30_b8",
+    "timestamp": "2026-03-13T08:58:43.450804+00:00",
+    "method": "sla1",
+    "config": {
+      "params": {
+        "block_size": 64,
+        "sparsity_ratio": 0.3,
+        "apply_to_layers": "all",
+        "tile_size_h": 30,
+        "tile_size_w": 8,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Combined SLA dense=30, boundary=8. Dense=30/b=5 got NEW BEST 0.447 at 2.96x! Dense=20/b=8 got 0.431 at 2.97x. With both maxed out, expect the highest quality configuration ~0.46-0.48 at ~2.8-2.9x.",
+    "phase": 4,
+    "latency": {
+      "total_generation_s": 1584.1948793735355,
+      "avg_per_video_s": 176.02165326372617,
+      "ms_per_frame": 2173.1068304163723,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 2.8979852225817533
+    },
+    "quality": {
+      "fid": 32.97507835094359,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.08637653373626403,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.46158050338826284
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.08221962844862019
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.241598464
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0034",
+    "experiment_name": "monarchrt_pure",
+    "timestamp": "2026-03-13T10:59:09.370494+00:00",
+    "method": "monarch_rt",
+    "config": {
+      "params": {
+        "block_size": 1,
+        "apply_to_layers": "all",
+        "tile_size_t": 1,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Pure MonarchRT with default params (f_tied=1, h_reduce=1, w_reduce=1, num_iters=1). Monarch matrix decomposition exploits 3D video structure. Per-attention speedup measured at 2.62x. Training-free application.",
+    "phase": 5,
+    "latency": {
+      "total_generation_s": 1032.3744562575594,
+      "avg_per_video_s": 114.70827291750659,
+      "ms_per_frame": 1416.1515175000814,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 4.44700401321129
+    },
+    "quality": {
+      "fid": 257.6510341855134,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.6348385071721752,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.10547932896611169
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.17592944621888432
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.24070656
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0035",
+    "experiment_name": "hybrid_monarchrt_d10",
+    "timestamp": "2026-03-13T11:30:26.278325+00:00",
+    "method": "monarch_rt",
+    "config": {
+      "params": {
+        "block_size": 1,
+        "apply_to_layers": "all",
+        "tile_size_t": 1,
+        "tile_size_h": 10,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Hybrid MonarchRT: dense for first 10 steps, then MonarchRT for remaining 40. This is the same hybrid approach that boosted VMoBA from 0.099 to 0.210 and SLA from 0.167 to 0.319. Expect ~3.5-3.8x speedup with much better quality than pure.",
+    "phase": 5,
+    "latency": {
+      "total_generation_s": 1162.6600120263174,
+      "avg_per_video_s": 129.18444578070194,
+      "ms_per_frame": 1594.8697009963203,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 3.948680871988457
+    },
+    "quality": {
+      "fid": 121.29624055582246,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.3292360449892013,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.2880999510929345
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.16561933864383918
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.240690176
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0037",
+    "experiment_name": "combined_monarchrt_d20_b5",
+    "timestamp": "2026-03-13T12:42:40.652974+00:00",
+    "method": "monarch_rt",
+    "config": {
+      "params": {
+        "block_size": 1,
+        "apply_to_layers": "all",
+        "tile_size_t": 1,
+        "tile_size_h": 20,
+        "tile_size_w": 5,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Combined MonarchRT d=20, b=5. Previous: pure=0.106@4.45x, hybrid_d10=0.288@3.95x, combined_d10_b5=0.299@3.43x. More dense steps should improve quality significantly. SLA d=20/b=5 got 0.415@3.08x.",
+    "phase": 5,
+    "latency": {
+      "total_generation_s": 1426.5441815201193,
+      "avg_per_video_s": 158.50490905779102,
+      "ms_per_frame": 1956.8507291085314,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 3.2182482741067773
+    },
+    "quality": {
+      "fid": 67.817631500517,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.19003523540758463,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.39067524629435413
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.1270966212718907
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.240690176
+    },
+    "status": "success"
+  },
+  {
+    "experiment_id": "exp_0041",
+    "experiment_name": "combined_monarchrt_d30_b5",
+    "timestamp": "2026-03-13T14:50:44.070602+00:00",
+    "method": "monarch_rt",
+    "config": {
+      "params": {
+        "block_size": 1,
+        "apply_to_layers": "all",
+        "tile_size_t": 1,
+        "tile_size_h": 30,
+        "tile_size_w": 5,
+        "extra": {}
+      },
+      "inference": {
+        "num_inference_steps": 50,
+        "guidance_scale": 7.5,
+        "video_length": 81,
+        "resolution": [
+          480,
+          832
+        ],
+        "seed": 42
+      }
+    },
+    "hypothesis": "Combined MonarchRT d=30, b=5. d=20/b=5 got 0.391@3.22x, d=20/b=8 got 0.397@3.05x. SLA d=30/b=5 got 0.447@2.96x. Only 20/50 steps sparse on middle layers. Should give best quality so far.",
+    "phase": 5,
+    "latency": {
+      "total_generation_s": 1515.1085779322311,
+      "avg_per_video_s": 168.3453975480257,
+      "ms_per_frame": 2078.3382413336503,
+      "attention_total_ms": 0.0,
+      "attention_avg_ms_per_call": 0.0,
+      "attention_num_calls": 0,
+      "speedup_vs_dense": 3.030128280561776
+    },
+    "quality": {
+      "fid": 49.63256146034058,
+      "ssim": 0.0,
+      "psnr": 0.0,
+      "lpips": 0.12453473902554014,
+      "image_reward": 0.0,
+      "hpsv2": 0.0,
+      "composite_score": 0.43126469333496387
+    },
+    "quality_std": {
+      "ssim_std": 0.0,
+      "psnr_std": 0.0,
+      "lpips_std": 0.10620997245753963
+    },
+    "meta": {
+      "eval_mode": "fast",
+      "num_videos": 9,
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "vram_peak_gb": 19.240690176
+    },
+    "status": "success"
+  }
+]

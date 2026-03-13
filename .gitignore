@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+methods/
+reference_videos/
+work_tmp/
+*.pt
