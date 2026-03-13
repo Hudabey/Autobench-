@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-We autonomously benchmarked 3 sparse attention methods (NABLA, VMoBA, PISA) on the Wan2.1-1.3B video diffusion transformer across 16 experiments. Our key finding: a **hybrid dense→VMoBA** approach — using dense attention for early denoising steps and VMoBA sparse attention for later steps — achieves the best quality-speed tradeoff, with **3.4x speedup** and **2x better composite quality** than pure sparse methods.
+We autonomously benchmarked 3 sparse attention methods (NABLA, VMoBA, PISA) on the Wan2.1-1.3B video diffusion transformer across 18 experiments. Our key finding: a **hybrid dense→VMoBA** approach — using dense attention for early denoising steps and VMoBA sparse attention for later steps — achieves the best quality-speed tradeoff, with **3.4x speedup** and **2x better composite quality** than pure sparse methods. Additionally, we discovered that **data-dependent sparsity (VMoBA) fundamentally outperforms fixed-window sparsity (NABLA)** in hybrid compositions — the same hybrid trick that doubled VMoBA's composite score barely helped NABLA at all.
 
 ## Environment
 
@@ -58,6 +58,8 @@ All experiments use fast-mode evaluation (9 prompts, FID + LPIPS metrics) unless
 | 14 | Hybrid dense(5)→VMoBA | 4 | 3.54x | 163.8 | 0.453 | 0.202 | yes |
 | 15 | **Hybrid dense(20)→VMoBA** | 4 | **3.24x** | **139.3** | **0.362** | **0.258** | **YES** |
 | 16 | Hybrid dense(10) full mode | 5 | — | — | — | — | FAILED (disk full at metrics) |
+| 17 | Hybrid dense(10)→NABLA | 4 | 3.81x | 363.5 | 0.818 | 0.085 | no |
+| 18 | Hybrid dense(10)→NABLA wide | 4 | 2.83x | 230.1 | 0.608 | 0.114 | no |
 
 ## Pareto Frontier (Speed vs Quality)
 
@@ -95,13 +97,18 @@ NABLA/STA at 4.23x is the fastest, but FID=367 and LPIPS=0.88 are very poor. Eve
 ### 4. PISA is architecture-dependent
 PISA's Triton kernels require Hopper (H100/H800) architecture and Triton >=3.5.1. They crash on RTX 5090 (Blackwell) with Triton 3.4.0. This is a fundamental compatibility issue, not a configuration problem.
 
-### 5. Dense early steps are critical for quality
+### 5. Data-dependent sparsity benefits far more from hybrid than fixed-window
+Hybrid dense→VMoBA: FID drops from 203→158 (**22% improvement**).
+Hybrid dense→NABLA: FID drops from 367→364 (**0.8% improvement**).
+The same 10 dense early steps that transformed VMoBA barely helped NABLA. This is because VMoBA's data-dependent block selection preserves the global structure established during dense steps, while NABLA's rigid ±5 spatial window immediately discards distant correlations regardless of what was computed in earlier steps.
+
+### 6. Dense early steps are critical for quality
 The diminishing returns curve on dense_steps shows that the first 5 dense steps capture most of the quality gain:
 - 0→5 dense steps: FID improves 203→164 (**19%**)
 - 5→10 dense steps: FID improves 164→158 (**4%**)
 - 10→20 dense steps: FID improves 158→139 (**12%**)
 
-### 6. flash-attn API compatibility requires careful handling
+### 7. flash-attn API compatibility requires careful handling
 flash-attn 2.8.3 changed `_flash_attn_varlen_forward` from 8 return values to 4. VMoBA expects the old 8-value API. A monkey-patch compatibility shim (in `vmoba_patch.py`) resolves this transparently.
 
 ## Technical Fixes Required
