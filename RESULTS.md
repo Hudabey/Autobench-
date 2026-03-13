@@ -2,14 +2,16 @@
 
 ## Executive Summary
 
-We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, SLA) on the **Wan2.1-1.3B** video diffusion transformer across **32 experiments** spanning 4 research phases. This is the definitive report of all findings.
+We autonomously benchmarked **5 sparse attention methods** (NABLA, VMoBA, PISA, SLA, MonarchRT) on the **Wan2.1-1.3B** video diffusion transformer across **42 experiments** spanning 5 research phases. This is the definitive report of all findings.
 
 **Key results:**
 
-- **Combined timestep + layer-selective SLA achieves composite=0.462 at 2.90x speedup** -- the best result across all 32 experiments (Experiment #32: dense_steps=30, boundary=8).
+- **Combined timestep + layer-selective SLA achieves composite=0.462 at 2.90x speedup** -- the best quality across all 42 experiments (Experiment #32: dense_steps=30, boundary=8).
+- **MonarchRT achieves composite=0.440 at 2.93x speedup** -- comparable quality to SLA with slightly higher speedup, using training-free Monarch matrix decomposition (Experiment #42: dense_steps=30, boundary=8).
 - **SLA consistently outperforms VMoBA** across every configuration tested, with quality advantages ranging from +5% to +69% composite.
+- **MonarchRT is competitive with SLA** despite being fully training-free (no learned components). At the pure-sparse operating point, MonarchRT achieves 4.45x speedup (fastest method).
 - **Hybrid dense-to-sparse approach is universally beneficial**, delivering 2-4x quality improvement over pure sparse methods with only modest speedup reduction.
-- **Data-dependent sparsity** (VMoBA, SLA) fundamentally outperforms **fixed-window sparsity** (NABLA) -- especially when combined with hybrid strategies.
+- **Data-dependent sparsity** (VMoBA, SLA, MonarchRT) fundamentally outperforms **fixed-window sparsity** (NABLA) -- especially when combined with hybrid strategies.
 - **PISA is incompatible** with RTX 5090 / Triton 3.4.0 hardware; requires Hopper architecture.
 - Increasing dense early steps from 10 to 30 yields significant quality gains (composite 0.373 to 0.462) with only ~5% speedup loss.
 
@@ -62,14 +64,24 @@ We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, 
 - **Best result**: 2.90x speedup, composite=0.462 (combined d=30, b=8) -- OVERALL BEST
 - **Key insight**: Despite `methods.yaml` reporting 0% negligible attention weights (vs SLA's own prediction of 45%), SLA works well empirically because its top-k block selection captures the most important attention patterns regardless of whether weights are truly "negligible."
 
-### 5. Other Methods Investigated (Not Feasible)
+### 5. MonarchRT (Monarch Matrix Decomposition) -- WORKING
+
+- **Approach**: Decomposes attention using Monarch matrices, exploiting the 3D (T, H, W) structure of video tokens. With f_tied=1, creates a two-level hierarchical attention: Level R across 21 frame blocks (each size 30×52), Level L within frames across 30 "columns" of size 52.
+- **Backend**: Custom Triton kernels (`monarch_attn.py`), training-free application
+- **Default config**: f_tied=1, h_reduce=1, w_reduce=1, num_iters=1
+- **Status**: Working -- Triton kernels compatible with RTX 5090 (Blackwell, sm_120)
+- **Best result**: 2.93x speedup, composite=0.440 (combined d=30, b=8) -- SECOND BEST overall
+- **Per-attention kernel speedup**: 12.08ms vs Dense SDPA 31.61ms = 2.62x
+- **Key insight**: MonarchRT's structural decomposition is fundamentally different from SLA's data-dependent top-k selection. MonarchRT approximates full attention via hierarchical structure, while SLA selects the most important blocks. Both benefit equally from the combined dense-early + boundary-layer strategy.
+- **Verdict**: Competitive with SLA, faster at equivalent quality points, fully training-free
+
+### 6. Other Methods Investigated (Not Feasible)
 
 | Method | Status | Reason |
 |--------|--------|--------|
 | STA/FastVideo | NOT FEASIBLE | Hardcoded canvas shapes incompatible with Wan2.1 |
 | VORTA | NOT FEASIBLE | Requires a trained router network (not available for Wan2.1) |
 | Video SNA | NOT APPLICABLE | Designed for Vision-Language Models, not diffusion |
-| MonarchRT | No public code | Paper-only at time of evaluation |
 | Sparse-vDiT | No public code | Paper-only at time of evaluation |
 | SALAD | No public code | Paper-only at time of evaluation |
 
@@ -83,7 +95,7 @@ We autonomously benchmarked **4 sparse attention methods** (NABLA, VMoBA, PISA, 
 
 ## Complete Results Table
 
-All 32 experiments with fast-mode evaluation (9 prompts, FID + LPIPS metrics).
+All 42 experiments with fast-mode evaluation (9 prompts, FID + LPIPS metrics).
 
 | # | Experiment | Phase | Speedup | FID | LPIPS | Composite | Pareto |
 |---|-----------|-------|---------|-----|-------|-----------|--------|
@@ -118,9 +130,19 @@ All 32 experiments with fast-mode evaluation (9 prompts, FID + LPIPS metrics).
 | 29 | Combined SLA (d=20, b=5) | 4 | 3.08x | 56.3 | 0.154 | 0.415 | YES |
 | 30 | Combined SLA (d=20, b=8) | 4 | 2.97x | 47.8 | 0.131 | 0.431 | YES |
 | 31 | Combined SLA (d=30, b=5) | 4 | 2.96x | 42.0 | 0.101 | 0.447 | YES |
-| 32 | **Combined SLA (d=30, b=8)** | 4 | **2.90x** | **33.0** | **0.086** | **0.462** | **YES (BEST)** |
+| 32 | **Combined SLA (d=30, b=8)** | 4 | **2.90x** | **33.0** | **0.086** | **0.462** | **YES (BEST QUALITY)** |
+| 33 | MonarchRT (method name fix) | 5 | -- | -- | -- | -- | FAILED (config) |
+| 34 | MonarchRT pure | 5 | **4.45x** | 257.7 | 0.635 | 0.106 | yes (fastest) |
+| 35 | Hybrid MonarchRT (d=10) | 5 | 3.95x | 121.3 | 0.329 | 0.288 | YES |
+| 36 | Combined MonarchRT (d=10, b=5) | 5 | 3.43x | 121.7 | 0.293 | 0.299 | YES |
+| 37 | Combined MonarchRT (d=20, b=5) | 5 | 3.22x | 67.8 | 0.190 | 0.391 | YES |
+| 38 | Combined MonarchRT (d=20, b=8) | 5 | -- | -- | -- | -- | FAILED (disk full) |
+| 39 | Combined MonarchRT (d=20, b=8) retry | 5 | 3.05x | 66.7 | 0.174 | 0.397 | YES |
+| 40 | Combined MonarchRT (d=30, b=5) | 5 | -- | -- | -- | -- | FAILED (temp file cleanup) |
+| 41 | Combined MonarchRT (d=30, b=5) retry | 5 | 3.03x | 49.6 | 0.125 | 0.431 | YES |
+| **42** | **Combined MonarchRT (d=30, b=8)** | 5 | **2.93x** | **45.3** | **0.113** | **0.440** | **YES (2ND BEST)** |
 
-**Failed experiments summary**: #2-3 (disk space), #5-6 (silent dense fallback -- methods appeared to work but actually used dense attention), #8 (PISA Triton crash on RTX 5090), #10 (disk space), #16 (disk full during metrics computation).
+**Failed experiments summary**: #2-3 (disk space), #5-6 (silent dense fallback -- methods appeared to work but actually used dense attention), #8 (PISA Triton crash on RTX 5090), #10 (disk space), #16 (disk full during metrics computation), #33 (method name typo), #38 (disk full), #40 (temp files deleted during evaluation).
 
 ## Pareto Frontier
 
@@ -131,20 +153,24 @@ Composite Quality
     |
     |
     |
-0.46|                        * Combined SLA(d=30,b=8) (2.90x)  << BEST
+0.46|                        * Combined SLA(d=30,b=8) (2.90x)  << BEST QUALITY
 0.45|                         * Combined SLA(d=30,b=5) (2.96x)
+0.44|                        * Combined MonarchRT(d=30,b=8) (2.93x)  << 2ND BEST
 0.43|                          * Combined SLA(d=20,b=8) (2.97x)
+    |                           * Combined MonarchRT(d=30,b=5) (3.03x)
 0.42|                           * Combined SLA(d=20,b=5) (3.08x)
-    |
+0.40|                            * Combined MonarchRT(d=20,b=8) (3.05x)
+0.39|                             * Combined MonarchRT(d=20,b=5) (3.22x)
 0.37|                           * Combined SLA(s=10,b=8) (3.06x)
 0.36|                            * Combined SLA(s=10,b=5) (3.20x)
 0.35|                              * Combined SLA(s=10,b=3) (3.31x)
 0.32|                                * Hybrid SLA(10) (3.50x)
-    |
-    |
+0.30|                              * Combined MonarchRT(d=10,b=5) (3.43x)
+0.29|                                 * Hybrid MonarchRT(10) (3.95x)
     |
 0.17|                                    * SLA pure (3.76x)
     |
+0.11|                                       * MonarchRT pure (4.45x)
 0.10|                                      * VMoBA pure (3.64x)
 0.09|                                         * NABLA (4.23x)
     |
@@ -155,15 +181,18 @@ Composite Quality
 **Pareto-optimal frontier** (each point offers the best quality at its speedup level):
 
 1. Dense baseline -- 1.00x, composite 1.000 (reference)
-2. **Combined SLA(d=20, b=8) -- 2.97x, composite 0.431 (OVERALL BEST)**
-3. Combined SLA(d=20, b=5) -- 3.08x, composite 0.415
-4. Combined SLA(s=10, b=5) -- 3.20x, composite 0.364
-5. Combined SLA(s=10, b=3) -- 3.31x, composite 0.347
-6. Hybrid SLA(10) -- 3.50x, composite 0.319
-7. SLA pure -- 3.76x, composite 0.167
-8. NABLA default -- 4.23x, composite 0.085
+2. **Combined SLA(d=30, b=8) -- 2.90x, composite 0.462 (BEST QUALITY)**
+3. **Combined MonarchRT(d=30, b=8) -- 2.93x, composite 0.440 (2ND BEST)**
+4. Combined MonarchRT(d=30, b=5) -- 3.03x, composite 0.431
+5. Combined SLA(d=20, b=5) -- 3.08x, composite 0.415
+6. Combined MonarchRT(d=20, b=5) -- 3.22x, composite 0.391
+7. Combined SLA(s=10, b=3) -- 3.31x, composite 0.347
+8. Hybrid SLA(10) -- 3.50x, composite 0.319
+9. SLA pure -- 3.76x, composite 0.167
+10. Hybrid MonarchRT(10) -- 3.95x, composite 0.288
+11. MonarchRT pure -- 4.45x, composite 0.106 (fastest sparse method)
 
-Note: All VMoBA configurations are now dominated by SLA equivalents that are both faster AND higher quality. For example, Combined VMoBA(b=8) at 3.04x/0.354 is dominated by Combined SLA(s=10,b=8) at 3.06x/0.373 and by Combined SLA(d=20,b=5) at 3.08x/0.415.
+Note: MonarchRT offers a strong speed/quality tradeoff -- at the 3.0-3.2x speedup range, MonarchRT and SLA achieve very similar quality. MonarchRT is training-free (no learned parameters), making it more portable across models. VMoBA configurations are dominated by both SLA and MonarchRT equivalents.
 
 ## Key Findings
 
@@ -225,7 +254,25 @@ PISA's custom Triton kernels fail with `LLVM ERROR: Cannot select` on RTX 5090. 
 
 flash-attn 2.8.3 changed `_flash_attn_varlen_forward` from 8 return values to 4. VMoBA expects the old 8-value API. A monkey-patch compatibility shim resolves this transparently.
 
-### 9. SLA works despite methods.yaml warning of 0% negligible attention weights
+### 9. MonarchRT is competitive with SLA despite being fully training-free
+
+MonarchRT achieves composite=0.440 at 2.93x speedup vs SLA's 0.462 at 2.90x -- only 5% lower quality. Unlike SLA (which has an untrained linear branch), MonarchRT requires zero learned parameters. Its Monarch matrix decomposition exploits the inherent 3D structure of video tokens (T=21 frames, H=30 rows, W=52 cols), creating hierarchical attention that naturally captures temporal and spatial correlations.
+
+**MonarchRT parameter sweep:**
+
+| Dense Steps | Boundary | Speedup | FID | LPIPS | Composite |
+|-------------|----------|---------|-----|-------|-----------|
+| 0 (pure) | 0 | 4.45x | 257.7 | 0.635 | 0.106 |
+| 10 | 0 | 3.95x | 121.3 | 0.329 | 0.288 |
+| 10 | 5 | 3.43x | 121.7 | 0.293 | 0.299 |
+| 20 | 5 | 3.22x | 67.8 | 0.190 | 0.391 |
+| 20 | 8 | 3.05x | 66.7 | 0.174 | 0.397 |
+| 30 | 5 | 3.03x | 49.6 | 0.125 | 0.431 |
+| 30 | 8 | 2.93x | 45.3 | 0.113 | 0.440 |
+
+The combined strategy benefits MonarchRT just as much as SLA and VMoBA -- confirming it is a universal pattern, not method-specific.
+
+### 10. SLA works despite methods.yaml warning of 0% negligible attention weights
 
 The profiling layer flagged SLA as having 0% negligible attention weights, suggesting it would be ineffective. Empirically, SLA achieves the best results because exploiting variance in attention magnitudes (keeping top 30% of blocks by QK score) is sufficient -- weights do not need to be truly negligible to be safely skipped.
 
@@ -384,6 +431,8 @@ All attention patches are saved in `experiments/patches/`:
 | `hybrid_sla_patch.py` | Hybrid SLA | Dense-to-SLA with step counter |
 | `combined_selective_patch.py` | Combined VMoBA | Timestep + layer-selective VMoBA |
 | `combined_sla_patch.py` | Combined SLA | Timestep + layer-selective SLA (BEST) |
+| `monarchrt_patch.py` | MonarchRT | Pure Monarch matrix decomposition attention |
+| `monarchrt_combined_patch.py` | Combined MonarchRT | Timestep + layer-selective MonarchRT (2ND BEST) |
 
 ## Limitations
 
@@ -446,31 +495,52 @@ params:
 
 **Result: 3.50x speedup, FID=109.6, LPIPS=0.272, composite=0.319**
 
-### Maximum Throughput (quality secondary)
+### Best Training-Free (MonarchRT)
 
-Pure SLA, no hybrid, no boundary layers:
+Combined MonarchRT with 30 dense steps and 8 boundary layers (no learned parameters):
 
 ```yaml
-method: "sla1"
+method: "monarch_rt"
 params:
-  tile_size_h: 0        # no dense steps
-  tile_size_w: 0        # no boundary layers
-  block_size: 64        # BLKQ/BLKK
-  sparsity_ratio: 0.3   # topk_ratio
+  tile_size_t: 1        # f_tied (Monarch decomposition parameter)
+  tile_size_h: 30       # dense_steps: first 30/50 steps use dense attention
+  tile_size_w: 8        # dense_layer_boundary: layers 0-7 and 22-29 use dense
+  block_size: 1         # num_iters
 ```
 
-**Result: 3.76x speedup, FID=166.6, LPIPS=0.556, composite=0.167**
+**Result: 2.93x speedup, FID=45.3, LPIPS=0.113, composite=0.440**
+
+### Maximum Throughput (quality secondary)
+
+Pure MonarchRT, no hybrid, no boundary layers:
+
+```yaml
+method: "monarch_rt"
+params:
+  tile_size_t: 1        # f_tied
+  tile_size_h: 0        # no dense steps
+  tile_size_w: 0        # no boundary layers
+  block_size: 1         # num_iters
+```
+
+**Result: 4.45x speedup, FID=257.7, LPIPS=0.635, composite=0.106** (fastest sparse method tested)
 
 ## Conclusion
 
-Across 30 experiments on 4 sparse attention methods, we establish that:
+Across 42 experiments on 5 sparse attention methods, we establish that:
 
-1. **SLA is the best sparse attention method for Wan2.1-1.3B video diffusion**, outperforming VMoBA at every configuration. SLA's block-level QK score top-k selection directly measures query-key relevance at block granularity, which is more effective than VMoBA's temporal chunk selection.
+1. **SLA is the best sparse attention method for Wan2.1-1.3B video diffusion**, achieving composite=0.462 at 2.90x speedup. SLA's block-level QK score top-k selection directly measures query-key relevance at block granularity.
 
-2. **The optimal strategy combines temporal and spatial selectivity**: dense attention for early denoising steps (global structure) and dense attention on boundary transformer layers (low-level features), with sparse attention only on middle layers during later steps.
+2. **MonarchRT is the best training-free method**, achieving composite=0.440 at 2.93x speedup -- only 5% below SLA. Its Monarch matrix decomposition exploits the 3D video token structure without any learned parameters, making it highly portable across models.
 
-3. **The best configuration -- Combined SLA(d=20, b=8) -- achieves composite=0.431 at 2.97x speedup**, representing a 335% improvement over pure VMoBA (0.099) and a 22% improvement over the previous best Combined SLA(d=10, b=8) at 0.373.
+3. **The optimal strategy combines temporal and spatial selectivity**: dense attention for early denoising steps (global structure) and dense attention on boundary transformer layers (low-level features), with sparse attention only on middle layers during later steps. This pattern holds universally across ALL methods tested (VMoBA, SLA, MonarchRT).
 
-4. **SLA works despite theoretical predictions suggesting otherwise.** The methods.yaml profiling indicated 0% negligible attention weights, yet SLA achieves strong results because exploiting variance in attention magnitudes is sufficient -- weights do not need to be truly negligible to be safely skipped.
+4. **The best configuration -- Combined SLA(d=30, b=8) -- achieves composite=0.462 at 2.90x speedup**, representing a 367% improvement over pure VMoBA (0.099) and a 24% improvement over Combined SLA(d=10, b=8) at 0.373.
 
-5. **The hybrid/combined strategy is the key enabler.** The choice of sparse method (SLA vs VMoBA) provides a consistent improvement, but the strategy (pure vs hybrid vs combined) provides the dominant effect. Both SLA and VMoBA benefit enormously from temporal and spatial selectivity, with the combined approach delivering 2-4x quality improvement over pure sparse.
+5. **MonarchRT achieves 4.45x speedup in pure mode** -- the fastest sparse method tested. While quality is poor at full sparsity (FID=258), the combined strategy brings it to FID=45.3, demonstrating that the hybrid approach is the key enabler regardless of the underlying sparse method.
+
+6. **SLA works despite theoretical predictions suggesting otherwise.** The methods.yaml profiling indicated 0% negligible attention weights, yet SLA achieves strong results because exploiting variance in attention magnitudes is sufficient.
+
+7. **The hybrid/combined strategy is the key enabler.** The choice of sparse method (SLA vs VMoBA vs MonarchRT) provides a consistent improvement, but the strategy (pure vs hybrid vs combined) provides the dominant effect. All three methods benefit enormously from temporal and spatial selectivity, with the combined approach delivering 2-4x quality improvement over pure sparse.
+
+8. **Method ranking**: SLA > MonarchRT > VMoBA > NABLA. SLA wins on quality, MonarchRT wins on portability and speed, VMoBA is solid but dominated, NABLA's fixed-window approach is too rigid for video diffusion.
