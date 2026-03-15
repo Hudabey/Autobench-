@@ -14,7 +14,7 @@ chmod +x setup.sh && ./setup.sh
 uv run python -m harness.evaluate --baseline-only --mode fast
 
 # 3. Start the agent
-# Point Claude Code / Codex / your agent at program.md:
+# Point your AI agent at program.md:
 #   "Read program.md and start the benchmarking loop."
 ```
 
